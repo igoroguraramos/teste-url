@@ -11,7 +11,7 @@ class UrlController extends Controller
 {
     public function __construct(){
         $this->middleware('auth',['except' => 'lista']);
-        $this->middleware('auth:api',['only' => 'lista']);
+        $this->middleware('jwt',['only' => 'lista']);
     }
     /**
      * Display a listing of the resource.
@@ -87,7 +87,14 @@ class UrlController extends Controller
      */
     public function update(Request $request, $id)
     {
-        //
+        $url = Url::find($id);
+        $requestNew = $request->all();
+        $response = Http::withOptions(['verify' => false])->get($request->url);
+        $requestNew['id_usuario'] = Auth::id();
+        $requestNew['resposta'] = $response->body();
+        $requestNew['status_code'] = $response->status();
+        $url->update($requestNew);
+        return $url;
     }
 
     /**
@@ -98,6 +105,6 @@ class UrlController extends Controller
      */
     public function destroy($id)
     {
-        //
+        Url::find($id)->delete();
     }
 }

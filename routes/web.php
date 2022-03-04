@@ -21,4 +21,6 @@ Auth::routes();
 
 Route::get('/', [App\Http\Controllers\UrlController::class, 'index'])->name('index');
 Route::post('/', [App\Http\Controllers\UrlController::class, 'store'])->name('store');
+Route::post('/{id}', [App\Http\Controllers\UrlController::class, 'update'])->name('update');
+Route::delete('/{id}', [App\Http\Controllers\UrlController::class, 'destroy'])->name('destroy');
 
