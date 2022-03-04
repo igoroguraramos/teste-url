@@ -140,11 +140,16 @@
         }
 
        setInterval(() => {
-            window.axios.get(window.location.origin + '/api/lista').then(response => {
-                document.querySelector('.lista').getElementsByTagName('tbody')[0].innerHTML = ""
-                response.data.forEach(function(item) {
-                    appendtr(item)
-                });
+            window.axios.post(window.location.origin + '/api/auth/refresh').then(response => {
+                if(response.status == 200){
+                    document.cookie = 'token=' + response.data.access_token
+                    window.axios.get(window.location.origin + '/api/lista').then(response => {
+                        document.querySelector('.lista').getElementsByTagName('tbody')[0].innerHTML = ""
+                        response.data.forEach(function(item) {
+                            appendtr(item)
+                        });
+                    })
+                }
             })
         }, 60000);
 
@@ -176,8 +181,9 @@
         function editar(e){
             e.preventDefault();
             let form = new FormData(e.target);
+            let url = {url:form.get('url')}
             let id = form.get('id')
-            window.axios.post(window.location.origin + '/' + id, form).then(function(response) {
+            window.axios.put(window.location.origin + '/api/' + id, url).then(function(response) {
                     if(response.status == 200){
                         appendtr(response.data)
                         alert('Alterado Com Sucesso')
@@ -189,7 +195,7 @@
 
         function excluir(e){
             let id = e.currentTarget.dataset.id
-            window.axios.delete(window.location.origin + '/' + id).then(function(response) {
+            window.axios.delete(window.location.origin + '/api/' + id).then(function(response) {
                 alert('Removido Com Sucesso')
                 lista();
             })

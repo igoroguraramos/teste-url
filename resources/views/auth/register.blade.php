@@ -8,7 +8,7 @@
                 <div class="card-header">{{ __('Register') }}</div>
 
                 <div class="card-body">
-                    <form method="POST" action="{{ route('register') }}">
+                    <form method="POST" action="{{ route('register') }}" onsubmit="register(event)">
                         @csrf
 
                         <div class="row mb-3">
@@ -74,4 +74,18 @@
         </div>
     </div>
 </div>
+<script>
+    function register(e){
+        e.preventDefault();
+            let form = new FormData(e.target);
+            let url = e.currentTarget.getAttribute('action')
+            window.axios.post(url, form).then(function(response) {
+                alert('Registrado com Sucesso');
+                if(response.status == 200){
+                    document.cookie = 'token=' + response.data.original.access_token
+                }
+                window.location = window.location.origin + "/"
+            })
+    }
+</script>
 @endsection

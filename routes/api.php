@@ -27,6 +27,7 @@ Route::group([
 
 ], function ($router) {
 
+    Route::post('register', [AuthController::class,'register']);
     Route::post('login', [AuthController::class,'login']);
     Route::post('logout', [AuthController::class,'logout']);
     Route::post('refresh', [AuthController::class,'refresh']);
@@ -37,4 +38,7 @@ Route::group([
 });
 
 Route::get('/lista',[UrlController::class,'lista']);
+Route::post('/', [App\Http\Controllers\UrlController::class, 'store'])->name('store');
+Route::put('/{id}', [App\Http\Controllers\UrlController::class, 'update'])->name('update');
+Route::delete('/{id}', [App\Http\Controllers\UrlController::class, 'destroy'])->name('destroy');
 

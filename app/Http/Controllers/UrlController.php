@@ -3,108 +3,105 @@
 namespace App\Http\Controllers;
 
 use App\Models\Url;
+use App\Traits\ApiCRUDTrait;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Validator;
 
 class UrlController extends Controller
 {
-    public function __construct(){
-        $this->middleware('auth',['except' => 'lista']);
-        $this->middleware('jwt',['only' => 'lista']);
+    public function __construct()
+    {
+        $this->middleware('auth',['only' => 'index']);
+        $this->middleware('jwt',['except' => 'index']);
+        $this->model = Url::class;
     }
-    /**
-     * Display a listing of the resource.
-     *
-     * @return \Illuminate\Http\Response
-     */
+
+    public function regrasDeValidacao(){
+        return [
+            'url' => ['required'],
+        ];
+    }
+
+    public function mensagensdeValidacao(){
+        return [
+            'required' => 'O (A) :attribute é obrigatório (a)'
+        ];
+    }
+
     public function index()
     {
         $urls =  Url::where('id_usuario',Auth::id())->get();
-        return view('lista',['urls' => $urls]);
+        return view('index',['urls' => $urls]);
     }
 
     public function lista(){
-        $urls =  Url::where('id_usuario', auth('api')->id())->get();
+        $urls =  Url::where('id_usuario', Auth::id())->get();
         return response($urls);
     }
 
-    /**
-     * Show the form for creating a new resource.
-     *
-     * @return \Illuminate\Http\Response
-     */
-    public function create()
-    {
-        //
-    }
-
-    /**
-     * Store a newly created resource in storage.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\Response
-     */
     public function store(Request $request)
     {
-        $requestNew = $request->all();
-        $response = Http::withOptions(['verify' => false])->get($request->url);
-        $requestNew['id_usuario'] = Auth::id();
-        $requestNew['resposta'] = $response->body();
-        $requestNew['status_code'] = $response->status();
-        $url = Url::create($requestNew);
-        return $url;
+        try{
+            $requestNew = $request->all();
+            $validator = Validator::make($request->all(), $this->regrasDeValidacao(), $message = $this->mensagensdeValidacao());
+            if ($validator->fails()) {
+                return response(['errors' => $validator->errors()],500);
+            }
+            $response = Http::withOptions(['verify' => false])->get($request->url);
+            $requestNew['id_usuario'] = Auth::id();
+            $requestNew['resposta'] = $response->body();
+            $requestNew['status_code'] = $response->status();
+            return response($this->model::create($requestNew),201);
+        }catch(\Exception $e){
+           return response()->json(['error' => $e->getMessage()], 500);
+        }
     }
 
-    /**
-     * Display the specified resource.
-     *
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
-     */
-    public function show($id)
-    {
-        //
-    }
-
-    /**
-     * Show the form for editing the specified resource.
-     *
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
-     */
-    public function edit($id)
-    {
-        //
-    }
-
-    /**
-     * Update the specified resource in storage.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
-     */
     public function update(Request $request, $id)
     {
-        $url = Url::find($id);
-        $requestNew = $request->all();
-        $response = Http::withOptions(['verify' => false])->get($request->url);
-        $requestNew['id_usuario'] = Auth::id();
-        $requestNew['resposta'] = $response->body();
-        $requestNew['status_code'] = $response->status();
-        $url->update($requestNew);
-        return $url;
+        try{
+            $requestNew = $request->all();
+            $validator = Validator::make($request->all(), $this->regrasDeValidacao(), $message = $this->mensagensdeValidacao());
+            if ($validator->fails()) {
+                return response(['errors' => $validator->errors()],500);
+            }
+            $model = $this->model::where('id_usuario',Auth::id())->find($id);
+            if($model){
+                $requestNew = $request->all();
+                $response = Http::withOptions(['verify' => false])->get($request->url);
+                $requestNew['resposta'] = $response->body();
+                $requestNew['status_code'] = $response->status();
+                $model->update($requestNew);
+                return response($model,200);
+            }else{
+                return response([
+                    'message'   => 'Registro Não Localizado',
+                ],404);
+            }
+        }catch(\Exception $e){
+           return response()->json(['error' => $e->getMessage()], 500);
+        }
     }
 
-    /**
-     * Remove the specified resource from storage.
-     *
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
-     */
     public function destroy($id)
     {
-        Url::find($id)->delete();
+        try{
+            $model = $this->model::where('id_usuario',Auth::id())->find($id);
+
+            if(!$model) {
+                return response()->json([
+                    'message'   => 'Registro Não Localizado',
+                ], 404);
+            }
+
+            if($model->delete()){
+                return response(['message' => 'Removido com Sucesso'],200);
+            }
+
+        }catch(\Exception $e){
+           return response()->json(['error' => $e->getMessage()], 500);
+        }
     }
 }

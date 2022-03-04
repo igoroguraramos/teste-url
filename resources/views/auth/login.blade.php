@@ -73,7 +73,7 @@
 <script>
     function login(e){
         e.preventDefault();
-        let form = new FormData(e.target);
+            let form = new FormData(e.target);
             let url = e.currentTarget.getAttribute('action')
             window.axios.post(window.location.origin + '/api/auth/login', form).then(function(response) {
                 if(response.status == 200){
